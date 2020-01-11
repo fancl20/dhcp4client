@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/d2g/dhcp4"
+	"github.com/fancl20/dhcp4"
 )
 
 const (
@@ -24,6 +24,7 @@ type Client struct {
 	broadcast     bool             //Set the Bcast flag in BOOTP Flags
 	connection    ConnectionInt    //The Connection Method to use
 	generateXID   func([]byte)     //Function Used to Generate a XID
+	hostname      []byte           //Server hostname
 }
 
 //Abstracts the type of underlying socket used
@@ -124,6 +125,13 @@ func Connection(conn ConnectionInt) func(*Client) error {
 func GenerateXID(g func([]byte)) func(*Client) error {
 	return func(c *Client) error {
 		c.generateXID = g
+		return nil
+	}
+}
+
+func Hostname(hostname string) func(*Client) error {
+	return func(c *Client) error {
+		c.hostname = []byte(hostname)
 		return nil
 	}
 }
@@ -266,6 +274,7 @@ func (c *Client) DiscoverPacket() dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(c.hardwareAddr)
+	packet.SetSName(c.hostname)
 	packet.SetXId(messageid)
 	packet.SetBroadcast(c.broadcast)
 
@@ -280,6 +289,7 @@ func (c *Client) RequestPacket(offerPacket *dhcp4.Packet) dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(c.hardwareAddr)
+	packet.SetSName(c.hostname)
 
 	packet.SetXId(offerPacket.XId())
 	packet.SetCIAddr(offerPacket.CIAddr())
@@ -302,6 +312,7 @@ func (c *Client) RenewalRequestPacket(acknowledgement *dhcp4.Packet) dhcp4.Packe
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(acknowledgement.CHAddr())
+	packet.SetSName(c.hostname)
 
 	packet.SetXId(messageid)
 	packet.SetCIAddr(acknowledgement.YIAddr())
@@ -324,6 +335,7 @@ func (c *Client) ReleasePacket(acknowledgement *dhcp4.Packet) dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(acknowledgement.CHAddr())
+	packet.SetSName(c.hostname)
 
 	packet.SetXId(messageid)
 	packet.SetCIAddr(acknowledgement.YIAddr())
@@ -343,6 +355,7 @@ func (c *Client) DeclinePacket(acknowledgement *dhcp4.Packet) dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(acknowledgement.CHAddr())
+	packet.SetSName(c.hostname)
 	packet.SetXId(messageid)
 
 	packet.AddOption(dhcp4.OptionDHCPMessageType, []byte{byte(dhcp4.Decline)})
