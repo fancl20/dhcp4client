@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fancl20/dhcp4"
+	"github.com/d2g/dhcp4"
 )
 
 const (
@@ -274,10 +274,10 @@ func (c *Client) DiscoverPacket() dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(c.hardwareAddr)
-	packet.SetSName(c.hostname)
 	packet.SetXId(messageid)
 	packet.SetBroadcast(c.broadcast)
 
+	packet.AddOption(dhcp4.OptionHostName, c.hostname)
 	packet.AddOption(dhcp4.OptionDHCPMessageType, []byte{byte(dhcp4.Discover)})
 	//packet.PadToMinSize()
 	return packet
@@ -289,13 +289,13 @@ func (c *Client) RequestPacket(offerPacket *dhcp4.Packet) dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(c.hardwareAddr)
-	packet.SetSName(c.hostname)
 
 	packet.SetXId(offerPacket.XId())
 	packet.SetCIAddr(offerPacket.CIAddr())
 	packet.SetSIAddr(offerPacket.SIAddr())
 
 	packet.SetBroadcast(c.broadcast)
+	packet.AddOption(dhcp4.OptionHostName, c.hostname)
 	packet.AddOption(dhcp4.OptionDHCPMessageType, []byte{byte(dhcp4.Request)})
 	packet.AddOption(dhcp4.OptionRequestedIPAddress, (offerPacket.YIAddr()).To4())
 	packet.AddOption(dhcp4.OptionServerIdentifier, offerOptions[dhcp4.OptionServerIdentifier])
@@ -312,13 +312,13 @@ func (c *Client) RenewalRequestPacket(acknowledgement *dhcp4.Packet) dhcp4.Packe
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(acknowledgement.CHAddr())
-	packet.SetSName(c.hostname)
 
 	packet.SetXId(messageid)
 	packet.SetCIAddr(acknowledgement.YIAddr())
 	packet.SetSIAddr(acknowledgement.SIAddr())
 
 	packet.SetBroadcast(c.broadcast)
+	packet.AddOption(dhcp4.OptionHostName, c.hostname)
 	packet.AddOption(dhcp4.OptionDHCPMessageType, []byte{byte(dhcp4.Request)})
 	packet.AddOption(dhcp4.OptionRequestedIPAddress, (acknowledgement.YIAddr()).To4())
 	packet.AddOption(dhcp4.OptionServerIdentifier, acknowledgementOptions[dhcp4.OptionServerIdentifier])
@@ -335,7 +335,6 @@ func (c *Client) ReleasePacket(acknowledgement *dhcp4.Packet) dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(acknowledgement.CHAddr())
-	packet.SetSName(c.hostname)
 
 	packet.SetXId(messageid)
 	packet.SetCIAddr(acknowledgement.YIAddr())
@@ -355,7 +354,6 @@ func (c *Client) DeclinePacket(acknowledgement *dhcp4.Packet) dhcp4.Packet {
 
 	packet := dhcp4.NewPacket(dhcp4.BootRequest)
 	packet.SetCHAddr(acknowledgement.CHAddr())
-	packet.SetSName(c.hostname)
 	packet.SetXId(messageid)
 
 	packet.AddOption(dhcp4.OptionDHCPMessageType, []byte{byte(dhcp4.Decline)})
