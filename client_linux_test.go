@@ -3,10 +3,10 @@ package dhcp4client_test
 import (
 	"log"
 	"net"
-	"testing"
 	"syscall"
+	"testing"
 
-	"github.com/fancl20/dhcp4"
+	"github.com/d2g/dhcp4"
 	"github.com/fancl20/dhcp4client"
 )
 
